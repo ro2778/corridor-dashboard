@@ -74,11 +74,38 @@ tr:last-child td{border-bottom:none}
 footer{color:var(--muted);font-size:11px;line-height:1.5;margin-top:16px}
 footer a{color:var(--ink2)}
 .empty{color:var(--muted);font-size:12px;padding:12px 0}
+.act{display:flex;gap:8px;align-items:center}
+.pbtn{font-size:11px;border:1px solid var(--ring);background:var(--surface);color:var(--ink2);
+  border-radius:99px;padding:3px 10px;font-family:inherit;cursor:pointer}
+.pbtn:disabled{opacity:.55}
+#gear{background:none;border:none;color:var(--muted);font-size:15px;padding:0 0 0 8px;cursor:pointer}
+#settings{display:none}
+#settings p{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:4px}
+#settings input{width:100%;padding:8px;border:1px solid var(--ring);border-radius:8px;
+  background:var(--page);color:var(--ink);font-size:12px;margin:8px 0;font-family:inherit}
+.btnrow{display:flex;gap:8px}
+.btn{font-size:12px;border:1px solid var(--ring);border-radius:8px;padding:6px 12px;
+  background:var(--surface);color:var(--ink);font-family:inherit;cursor:pointer}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:var(--ink);
+  color:var(--page);font-size:12px;border-radius:99px;padding:8px 14px;display:none;z-index:9;
+  max-width:88vw;text-align:center}
 </style>
 </head>
 <body>
-<header><h1>📊 Corridor bot</h1><span class="chip">practice · v4</span></header>
+<header><h1>📊 Corridor bot</h1><span class="act"><span class="chip">practice · v4</span><button id="gear" aria-label="Remote-control settings">⚙︎</button></span></header>
 <div class="sub" id="updated"></div>
+
+<div class="card" id="settings">
+  <h2>Remote control (this device only)</h2>
+  <p>To make the ⏸/▶ buttons work, paste a GitHub fine-grained token with
+  <b>Actions: read &amp; write</b> on <b>ro2778/corridor-bot</b> only. It is kept in
+  this browser's storage on this device and sent only to api.github.com —
+  it is never part of this public page. Anyone without the token sees a
+  read-only dashboard.</p>
+  <input id="tok" type="password" placeholder="github_pat_…" autocomplete="off">
+  <div class="btnrow"><button class="btn" id="saveTok">Save</button><button class="btn" id="clearTok">Clear</button></div>
+</div>
+<div id="toast"></div>
 
 <div class="card">
   <div class="hero" id="equity"></div>
@@ -110,15 +137,65 @@ footer a{color:var(--ink2)}
 </div>
 
 <footer>
-  Updates hourly through the US session. Pause a stock before earnings: edit
-  <code>corridors.json → "paused"</code> in the
-  <a href="https://github.com/ro2778/corridor-bot">repo</a>; flags arrive as GitHub Issues.
+  Updates hourly through the US session. ⏸/▶ buttons pause/resume a stock for
+  manual trading (needs the one-time token in ⚙︎; applies within ~2 minutes).
+  Flags arrive as GitHub Issues from the
+  <a href="https://github.com/ro2778/corridor-bot">repo</a>.
   Benchmarks are USD price indices; the portfolio is measured in the account currency.
 </footer>
 
 <script>
-const D = {"updated": "Thu 20 Aug, 06:16 ET", "equity": 49999.99, "invested": 0, "cash": 12246.8, "uninvested": 49999.99, "ccy": "GBP", "n_orders": 48, "paused": [], "history": [{"date": "2026-08-19", "equity": 49999.99, "spx": 7707.98, "ndx": 26331.09}, {"date": "2026-08-20", "equity": 49999.99, "spx": 7707.98, "ndx": 26331.09}], "perf": [{"label": "1 day", "port": 0.0, "spx": 0.0, "ndx": 0.0, "vs_s": 0.0, "vs_n": 0.0}, {"label": "1 week", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "1 month", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "3 months", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "1 year", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "All-time", "port": 0.0, "spx": 0.0, "ndx": 0.0, "vs_s": 0.0, "vs_n": 0.0}], "holdings": [{"tkr": "AAPL", "qty": 0, "avg": null, "px": 316.8800048828125, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 0.2984619140625, "conviction": 0.716, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "AMD", "qty": 0, "avg": null, "px": 466.3800048828125, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -2.1379165649414062, "conviction": 1.167, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "AMZN", "qty": 0, "avg": null, "px": 265.8900146484375, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 0.7260009765625, "conviction": 0.915, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "ASML", "qty": 0, "avg": null, "px": 1506.5999755859375, "stock_ccy": "EUR", "pl": null, "value": 0.0, "depth": -1.0152176566745923, "conviction": 0.995, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "AVGO", "qty": 0, "avg": null, "px": 362.4800109863281, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -1.422499656677246, "conviction": 1.361, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "GOOGL", "qty": 0, "avg": null, "px": 344.7799987792969, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -0.9063158537212171, "conviction": 1.118, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "META", "qty": 0, "avg": null, "px": 545.97998046875, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -1.5838894314236112, "conviction": 1.453, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "MSFT", "qty": 0, "avg": null, "px": 484.4800109863281, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 1.8063638860529119, "conviction": 0.681, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "NVDA", "qty": 0, "avg": null, "px": 217.64999389648438, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -0.21363691850142041, "conviction": 1.108, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "PLTR", "qty": 0, "avg": null, "px": 175.17999267578125, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 1.8433329264322917, "conviction": 0.741, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "TSM", "qty": 0, "avg": null, "px": 412.3299865722656, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -1.1112505594889324, "conviction": 1.085, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "UBER", "qty": 0, "avg": null, "px": 78.04000091552734, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 2.183333714803056, "conviction": 0.661, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}]};
+const D = {"updated": "Thu 20 Aug, 06:22 ET", "equity": 49999.99, "invested": 0, "cash": 12234.08, "uninvested": 49999.99, "ccy": "GBP", "n_orders": 48, "paused": [], "history": [{"date": "2026-08-19", "equity": 49999.99, "spx": 7707.98, "ndx": 26331.09}, {"date": "2026-08-20", "equity": 49999.99, "spx": 7707.98, "ndx": 26331.09}], "perf": [{"label": "1 day", "port": 0.0, "spx": 0.0, "ndx": 0.0, "vs_s": 0.0, "vs_n": 0.0}, {"label": "1 week", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "1 month", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "3 months", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "1 year", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "All-time", "port": 0.0, "spx": 0.0, "ndx": 0.0, "vs_s": 0.0, "vs_n": 0.0}], "holdings": [{"tkr": "AAPL", "qty": 0, "avg": null, "px": 316.8800048828125, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 0.2984619140625, "conviction": 0.716, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "AMD", "qty": 0, "avg": null, "px": 466.3800048828125, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -2.1379165649414062, "conviction": 1.167, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "AMZN", "qty": 0, "avg": null, "px": 265.8900146484375, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 0.7260009765625, "conviction": 0.915, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "ASML", "qty": 0, "avg": null, "px": 1505.800048828125, "stock_ccy": "EUR", "pl": null, "value": 0.0, "depth": -1.0239125127377717, "conviction": 0.995, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "AVGO", "qty": 0, "avg": null, "px": 362.4800109863281, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -1.422499656677246, "conviction": 1.361, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "GOOGL", "qty": 0, "avg": null, "px": 344.7799987792969, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -0.9063158537212171, "conviction": 1.118, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "META", "qty": 0, "avg": null, "px": 545.97998046875, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -1.5838894314236112, "conviction": 1.453, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "MSFT", "qty": 0, "avg": null, "px": 484.4800109863281, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 1.8063638860529119, "conviction": 0.681, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "NVDA", "qty": 0, "avg": null, "px": 217.64999389648438, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -0.21363691850142041, "conviction": 1.108, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "PLTR", "qty": 0, "avg": null, "px": 175.17999267578125, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 1.8433329264322917, "conviction": 0.741, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "TSM", "qty": 0, "avg": null, "px": 412.3299865722656, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -1.1112505594889324, "conviction": 1.085, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "UBER", "qty": 0, "avg": null, "px": 78.04000091552734, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 2.183333714803056, "conviction": 0.661, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}]};
 const $ = id => document.getElementById(id);
+
+/* ---- remote control: device-local token + workflow dispatch ---- */
+const LS = "cb_pause_token";
+const getTok = () => { try { return localStorage.getItem(LS) || ""; } catch (e) { return ""; } };
+let toastT;
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toastT); toastT = setTimeout(() => t.style.display = "none", 4200);
+}
+$("gear").onclick = () => {
+  const s = $("settings");
+  s.style.display = s.style.display === "block" ? "none" : "block";
+};
+$("saveTok").onclick = () => {
+  const v = $("tok").value.trim();
+  if (!v) { toast("Paste a token first"); return; }
+  try { localStorage.setItem(LS, v); } catch (e) { toast("This browser blocks storage (private mode?)"); return; }
+  $("tok").value = ""; $("settings").style.display = "none";
+  toast("Saved on this device — ⏸/▶ buttons are live");
+};
+$("clearTok").onclick = () => {
+  try { localStorage.removeItem(LS); } catch (e) {}
+  toast("Token removed from this device");
+};
+async function dispatch(ticker, action, btn) {
+  const t = getTok();
+  if (!t) { $("settings").style.display = "block"; toast("Add a token first (⚙︎)"); return; }
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = "⏳…";
+  try {
+    const r = await fetch(
+      "https://api.github.com/repos/ro2778/corridor-bot/actions/workflows/pause.yml/dispatches",
+      { method: "POST",
+        headers: { "Authorization": "Bearer " + t,
+                   "Accept": "application/vnd.github+json",
+                   "Content-Type": "application/json" },
+        body: JSON.stringify({ ref: "main", inputs: { ticker: ticker, action: action } }) });
+    if (r.status === 204) {
+      btn.textContent = action === "pause" ? "⏳ pausing" : "⏳ resuming";
+      toast(ticker + " " + action + " requested — the bot applies it in ~2 min; refresh this page after");
+    } else {
+      btn.disabled = false; btn.textContent = old;
+      toast("GitHub replied " + r.status + " — check the token in ⚙︎");
+    }
+  } catch (e) {
+    btn.disabled = false; btn.textContent = old;
+    toast("Network error — try again");
+  }
+}
 const fmt = (x,dp=2) => x==null ? "–" : x.toLocaleString(undefined,{minimumFractionDigits:dp,maximumFractionDigits:dp});
 const pct = (x,s=true) => x==null ? "–" : (s&&x>0?"+":"")+(100*x).toFixed(2)+"%";
 const cls = x => x==null ? "flat" : x>1e-9 ? "up" : x<-1e-9 ? "down" : "flat";
@@ -256,8 +333,14 @@ D.holdings.forEach(h => {
   const row = document.createElement("div"); row.className = "h-row";
   const top = document.createElement("div"); top.className = "h-top";
   const t = document.createElement("span"); t.className = "h-tkr"; t.textContent = h.tkr;
+  const act = document.createElement("span"); act.className = "act";
   const s = document.createElement("span"); s.className = "h-status"; s.textContent = h.status;
-  top.appendChild(t); top.appendChild(s); row.appendChild(top);
+  const isPaused = h.status.indexOf("paused") >= 0;
+  const pb = document.createElement("button"); pb.className = "pbtn";
+  pb.textContent = isPaused ? "▶ Resume" : "⏸ Pause";
+  pb.onclick = () => dispatch(h.tkr, isPaused ? "resume" : "pause", pb);
+  act.appendChild(s); act.appendChild(pb);
+  top.appendChild(t); top.appendChild(act); row.appendChild(top);
 
   const mid = document.createElement("div"); mid.className = "h-mid";
   const left = document.createElement("span");
