@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Corridor bot</title>
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e;
+  --muted:#898781; --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --good:#006300; --bad:#d03b3b; --warn:#fab219;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7;
+    --muted:#898781; --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --good:#0ca30c; --bad:#d03b3b;
+  }
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--page);
+  color:var(--ink);padding:16px 14px calc(28px + env(safe-area-inset-bottom));
+  max-width:640px;margin:0 auto;-webkit-text-size-adjust:100%}
+header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+h1{font-size:17px;font-weight:650}
+.sub{color:var(--muted);font-size:12px;margin-bottom:14px}
+.chip{font-size:11px;color:var(--ink2);border:1px solid var(--ring);border-radius:99px;
+  padding:2px 8px;white-space:nowrap}
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:14px;
+  padding:14px;margin-bottom:12px}
+.hero{font-size:44px;font-weight:600;letter-spacing:-.01em;line-height:1.1}
+.hero-ccy{font-size:17px;color:var(--ink2);font-weight:500}
+.delta{font-size:14px;font-weight:600}
+.delta small{color:var(--muted);font-weight:400}
+.up{color:var(--good)} .down{color:var(--bad)} .flat{color:var(--ink2)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tile{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:10px 12px}
+.tile .l{font-size:11px;color:var(--muted);margin-bottom:3px}
+.tile .v{font-size:17px;font-weight:600}
+h2{font-size:13px;color:var(--ink2);font-weight:600;margin-bottom:10px}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--ink2);margin-bottom:8px;flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px;border-radius:1px}
+#chartwrap{position:relative}
+#tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--ring);
+  border-radius:8px;padding:7px 9px;font-size:11px;display:none;box-shadow:0 2px 10px rgba(0,0,0,.18);
+  min-width:118px;z-index:2}
+#tip .d{color:var(--muted);margin-bottom:4px}
+#tip .r{display:flex;justify-content:space-between;gap:10px;margin-top:2px}
+#tip .r b{font-weight:600}
+#tip .k{display:inline-block;width:10px;height:2px;vertical-align:middle;margin-right:4px;border-radius:1px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:var(--muted);font-weight:500;text-align:right;padding:4px 0;border-bottom:1px solid var(--grid)}
+th:first-child,td:first-child{text-align:left}
+td{text-align:right;padding:6px 0;border-bottom:1px solid var(--grid);
+   font-variant-numeric:tabular-nums;color:var(--ink)}
+tr:last-child td{border-bottom:none}
+.hold{display:flex;flex-direction:column;gap:0}
+.h-row{padding:11px 0;border-bottom:1px solid var(--grid)}
+.h-row:last-child{border-bottom:none}
+.h-top{display:flex;justify-content:space-between;align-items:baseline}
+.h-tkr{font-weight:650;font-size:14px}
+.h-status{font-size:11px;color:var(--ink2)}
+.h-mid{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin:3px 0 7px}
+.meter{position:relative;height:14px}
+.meter svg{display:block;width:100%;height:14px}
+.h-sub{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px}
+footer{color:var(--muted);font-size:11px;line-height:1.5;margin-top:16px}
+footer a{color:var(--ink2)}
+.empty{color:var(--muted);font-size:12px;padding:12px 0}
+</style>
+</head>
+<body>
+<header><h1>📊 Corridor bot</h1><span class="chip">practice · v4</span></header>
+<div class="sub" id="updated"></div>
+
+<div class="card">
+  <div class="hero" id="equity"></div>
+  <div class="delta" id="alltime"></div>
+</div>
+
+<div class="tiles" id="tiles"></div>
+
+<div class="card">
+  <h2>Growth of 100 since launch</h2>
+  <div class="legend">
+    <span><i style="background:var(--s1)"></i>Portfolio</span>
+    <span><i style="background:var(--s2)"></i>S&amp;P 500</span>
+    <span><i style="background:var(--s3)"></i>Nasdaq</span>
+  </div>
+  <div id="chartwrap"><div id="chart"></div><div id="tip"></div></div>
+</div>
+
+<div class="card">
+  <h2>Performance</h2>
+  <table id="perf"><thead><tr>
+    <th>Interval</th><th>Portfolio</th><th>S&amp;P</th><th>Nasdaq</th><th>vs S&amp;P</th>
+  </tr></thead><tbody></tbody></table>
+</div>
+
+<div class="card">
+  <h2>Holdings &amp; ladders</h2>
+  <div class="hold" id="hold"></div>
+</div>
+
+<footer>
+  Updates hourly through the US session. Pause a stock before earnings: edit
+  <code>corridors.json → "paused"</code> in the
+  <a href="https://github.com/ro2778/corridor-bot">repo</a>; flags arrive as GitHub Issues.
+  Benchmarks are USD price indices; the portfolio is measured in the account currency.
+</footer>
+
+<script>
+const D = {"updated": "Thu 20 Aug, 06:07 ET", "equity": 49999.99, "invested": 0, "cash": 12221.73, "uninvested": 49999.99, "ccy": "GBP", "n_orders": 48, "paused": [], "history": [{"date": "2026-08-19", "equity": 49999.99, "spx": 7707.98, "ndx": 26331.09}, {"date": "2026-08-20", "equity": 49999.99, "spx": 7707.98, "ndx": 26331.09}], "perf": [{"label": "1 day", "port": 0.0, "spx": 0.0, "ndx": 0.0, "vs_s": 0.0, "vs_n": 0.0}, {"label": "1 week", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "1 month", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "3 months", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "1 year", "port": null, "spx": null, "ndx": null, "vs_s": null, "vs_n": null}, {"label": "All-time", "port": 0.0, "spx": 0.0, "ndx": 0.0, "vs_s": 0.0, "vs_n": 0.0}], "holdings": [{"tkr": "AAPL", "qty": 0, "avg": null, "px": 316.8800048828125, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 0.2984619140625, "conviction": 0.716, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "AMD", "qty": 0, "avg": null, "px": 466.3800048828125, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -2.1379165649414062, "conviction": 1.167, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "AMZN", "qty": 0, "avg": null, "px": 265.8900146484375, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 0.7260009765625, "conviction": 0.915, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "ASML", "qty": 0, "avg": null, "px": 1504.4000244140625, "stock_ccy": "EUR", "pl": null, "value": 0.0, "depth": -1.0391301694123642, "conviction": 0.995, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "AVGO", "qty": 0, "avg": null, "px": 362.4800109863281, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -1.422499656677246, "conviction": 1.361, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "GOOGL", "qty": 0, "avg": null, "px": 344.7799987792969, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -0.9063158537212171, "conviction": 1.118, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "META", "qty": 0, "avg": null, "px": 545.97998046875, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -1.5838894314236112, "conviction": 1.453, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "MSFT", "qty": 0, "avg": null, "px": 484.4800109863281, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 1.8063638860529119, "conviction": 0.681, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "NVDA", "qty": 0, "avg": null, "px": 217.64999389648438, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -0.21363691850142041, "conviction": 1.108, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "PLTR", "qty": 0, "avg": null, "px": 175.17999267578125, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 1.8433329264322917, "conviction": 0.741, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "TSM", "qty": 0, "avg": null, "px": 412.3299865722656, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": -1.1112505594889324, "conviction": 1.085, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}, {"tkr": "UBER", "qty": 0, "avg": null, "px": 78.04000091552734, "stock_ccy": "USD", "pl": null, "value": 0.0, "depth": 2.183333714803056, "conviction": 0.661, "buys": 4, "sells": 0, "sold_cum": 0.0, "status": "\ud83d\udcc8 rising"}]};
+const $ = id => document.getElementById(id);
+const fmt = (x,dp=2) => x==null ? "–" : x.toLocaleString(undefined,{minimumFractionDigits:dp,maximumFractionDigits:dp});
+const pct = (x,s=true) => x==null ? "–" : (s&&x>0?"+":"")+(100*x).toFixed(2)+"%";
+const cls = x => x==null ? "flat" : x>1e-9 ? "up" : x<-1e-9 ? "down" : "flat";
+
+$("updated").textContent = "Updated " + D.updated + " · Trading212 practice account" +
+  (D.paused.length ? " · ⏸ paused: " + D.paused.join(", ") : "");
+$("equity").innerHTML = fmt(D.equity) + ' <span class="hero-ccy">' + D.ccy + "</span>";
+const at = D.perf.find(p => p.label === "All-time");
+$("alltime").className = "delta " + cls(at && at.port);
+$("alltime").innerHTML = (at && at.port != null ? pct(at.port) : "—") +
+  ' <small>all-time' + (at && at.vs_s != null ? " · " + pct(at.vs_s) + " vs S&P" : "") + "</small>";
+
+const day = D.perf.find(p => p.label === "1 day");
+const tiles = [
+  ["Day", day && day.port != null ? pct(day.port) : "–", cls(day && day.port)],
+  ["Invested", fmt(D.invested, 0) + " " + D.ccy, ""],
+  ["Cash reserve", pct(D.uninvested / D.equity, false) + " of equity", ""],
+  ["Resting orders", String(D.n_orders), ""],
+];
+$("tiles").innerHTML = tiles.map(t =>
+  '<div class="tile"><div class="l"></div><div class="v ' + t[2] + '"></div></div>').join("");
+document.querySelectorAll("#tiles .tile").forEach((el, i) => {
+  el.querySelector(".l").textContent = tiles[i][0];
+  el.querySelector(".v").textContent = tiles[i][1];
+});
+
+/* ---- performance table ---- */
+const tb = $("perf").querySelector("tbody");
+D.perf.forEach(p => {
+  const tr = document.createElement("tr");
+  [p.label, pct(p.port), pct(p.spx), pct(p.ndx), pct(p.vs_s)].forEach((v, i) => {
+    const td = document.createElement("td");
+    td.textContent = v;
+    if (i === 1) td.className = cls(p.port);
+    if (i === 4) td.className = cls(p.vs_s);
+    tr.appendChild(td);
+  });
+  tb.appendChild(tr);
+});
+
+/* ---- equity curve (indexed to 100) ---- */
+(function(){
+  const H = D.history.filter(r => r.equity != null);
+  const wrap = $("chart");
+  if (H.length < 2) {
+    wrap.innerHTML = '<div class="empty">The equity curve appears once a second daily snapshot exists.</div>';
+    return;
+  }
+  const base = H[0];
+  const keys = [["equity","--s1"],["spx","--s2"],["ndx","--s3"]];
+  const series = keys.map(([k]) => H.map(r =>
+    (r[k] != null && base[k]) ? 100 * r[k] / base[k] : null));
+  const W = 600, Hh = 240, padL = 34, padR = 10, padT = 8, padB = 22;
+  const flat = series.flat().filter(v => v != null);
+  let lo = Math.min(...flat), hi = Math.max(...flat);
+  if (hi - lo < 2) { lo -= 1; hi += 1; }
+  const span = hi - lo; lo -= span * .06; hi += span * .06;
+  const X = i => padL + (W - padL - padR) * (H.length === 1 ? 0 : i / (H.length - 1));
+  const Y = v => padT + (Hh - padT - padB) * (1 - (v - lo) / (hi - lo));
+  const css = getComputedStyle(document.documentElement);
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" style="width:100%;height:auto;display:block" id="svgc">';
+  const nt = 4;
+  for (let g = 0; g <= nt; g++) {
+    const v = lo + (hi - lo) * g / nt, y = Y(v);
+    svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y +
+           '" stroke="var(--grid)" stroke-width="1"/>' +
+           '<text x="' + (padL - 5) + '" y="' + (y + 3) + '" text-anchor="end" font-size="9" fill="var(--muted)">' +
+           v.toFixed(0) + "</text>";
+  }
+  const lab = [0, Math.floor((H.length - 1) / 2), H.length - 1];
+  lab.forEach(i => {
+    svg += '<text x="' + X(i) + '" y="' + (Hh - 6) + '" text-anchor="middle" font-size="9" fill="var(--muted)">' +
+           H[i].date.slice(5) + "</text>";
+  });
+  series.forEach((S, si) => {
+    let dstr = "", pen = false;
+    S.forEach((v, i) => {
+      if (v == null) { pen = false; return; }
+      dstr += (pen ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1) + " ";
+      pen = true;
+    });
+    svg += '<path d="' + dstr + '" fill="none" stroke="var(' + keys[si][1] +
+           ')" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    const last = S.length - 1;
+    if (S[last] != null)
+      svg += '<circle cx="' + X(last) + '" cy="' + Y(S[last]) + '" r="4" fill="var(' + keys[si][1] +
+             ')" stroke="var(--surface)" stroke-width="2"/>';
+  });
+  svg += '<line id="xh" x1="0" y1="' + padT + '" x2="0" y2="' + (Hh - padB) +
+         '" stroke="var(--axis)" stroke-width="1" visibility="hidden"/></svg>';
+  wrap.innerHTML = svg;
+
+  const svgEl = $("svgc"), tip = $("tip"), xh = document.getElementById("xh");
+  const names = ["Portfolio", "S&P 500", "Nasdaq"];
+  function show(ev) {
+    const r = svgEl.getBoundingClientRect();
+    const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+    const xu = px / r.width * W;
+    let i = Math.round((xu - padL) / ((W - padL - padR) / (H.length - 1)));
+    i = Math.max(0, Math.min(H.length - 1, i));
+    xh.setAttribute("x1", X(i)); xh.setAttribute("x2", X(i));
+    xh.setAttribute("visibility", "visible");
+    tip.style.display = "block";
+    while (tip.firstChild) tip.removeChild(tip.firstChild);
+    const d = document.createElement("div"); d.className = "d";
+    d.textContent = H[i].date; tip.appendChild(d);
+    series.forEach((S, si) => {
+      if (S[i] == null) return;
+      const row = document.createElement("div"); row.className = "r";
+      const l = document.createElement("span");
+      const k = document.createElement("i"); k.className = "k";
+      k.style.background = css.getPropertyValue(keys[si][1]) || "var(" + keys[si][1] + ")";
+      k.style.cssText += ";background:var(" + keys[si][1] + ")";
+      l.appendChild(k); l.appendChild(document.createTextNode(names[si]));
+      const b = document.createElement("b");
+      b.textContent = (S[i] - 100 > 0 ? "+" : "") + (S[i] - 100).toFixed(2) + "%";
+      row.appendChild(l); row.appendChild(b); tip.appendChild(row);
+    });
+    const wr = $("chartwrap").getBoundingClientRect();
+    let tx = px + 14;
+    if (tx + tip.offsetWidth > wr.width) tx = px - tip.offsetWidth - 14;
+    tip.style.left = Math.max(0, tx) + "px";
+    tip.style.top = "10px";
+  }
+  function hide() { tip.style.display = "none"; xh.setAttribute("visibility", "hidden"); }
+  svgEl.addEventListener("pointermove", show);
+  svgEl.addEventListener("touchstart", show, {passive: true});
+  svgEl.addEventListener("touchmove", show, {passive: true});
+  svgEl.addEventListener("pointerleave", hide);
+})();
+
+/* ---- holdings: depth meter -2.75σ … +2.75σ ---- */
+const hold = $("hold");
+D.holdings.forEach(h => {
+  const row = document.createElement("div"); row.className = "h-row";
+  const top = document.createElement("div"); top.className = "h-top";
+  const t = document.createElement("span"); t.className = "h-tkr"; t.textContent = h.tkr;
+  const s = document.createElement("span"); s.className = "h-status"; s.textContent = h.status;
+  top.appendChild(t); top.appendChild(s); row.appendChild(top);
+
+  const mid = document.createElement("div"); mid.className = "h-mid";
+  const left = document.createElement("span");
+  left.textContent = h.qty > 0
+    ? h.qty.toFixed(4) + " @ " + fmt(h.avg) + " " + h.stock_ccy
+    : "no position · " + h.buys + " buys resting";
+  const right = document.createElement("span");
+  if (h.qty > 0 && h.pl != null) {
+    right.innerHTML = fmt(h.value, 0) + " " + D.ccy + " · <span class="
+      + '"' + cls(h.pl) + '"' + "></span>";
+    right.querySelector("span").textContent = pct(h.pl);
+  } else {
+    right.textContent = fmt(h.px) + " " + h.stock_ccy;
+  }
+  mid.appendChild(left); mid.appendChild(right); row.appendChild(mid);
+
+  const lo = -2.75, hi = 2.75, W = 600;
+  const gx = d => (Math.max(lo, Math.min(hi, d)) - lo) / (hi - lo) * W;
+  let g = '<svg viewBox="0 0 ' + W + ' 14" preserveAspectRatio="none" style="width:100%;height:14px;display:block">';
+  g += '<rect x="0" y="6" width="' + W + '" height="2" rx="1" fill="var(--grid)"/>';
+  g += '<rect x="' + gx(-1.5) + '" y="4" width="' + (gx(1.5) - gx(-1.5)) +
+       '" height="6" rx="3" fill="var(--s1)" opacity="0.13"/>';
+  [-1.5, -1.75, -2.0, -2.25].forEach(rg => {
+    g += '<line x1="' + gx(rg) + '" y1="3" x2="' + gx(rg) + '" y2="11" stroke="var(--axis)" stroke-width="1"/>';
+  });
+  g += '<line x1="' + gx(0) + '" y1="2" x2="' + gx(0) + '" y2="12" stroke="var(--axis)" stroke-width="1"/>';
+  if (h.depth != null)
+    g += '<circle cx="' + gx(h.depth) + '" cy="7" r="5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>';
+  g += "</svg>";
+  const m = document.createElement("div"); m.className = "meter"; m.innerHTML = g;
+  row.appendChild(m);
+
+  const sub = document.createElement("div"); sub.className = "h-sub";
+  const sl = document.createElement("span");
+  sl.textContent = (h.depth != null ? h.depth.toFixed(2) + "σ" : "–") +
+    " on 90d corridor · conviction " + h.conviction.toFixed(2) + "×";
+  const sr = document.createElement("span");
+  sr.textContent = h.buys + " buys · " + h.sells + " sells" +
+    (h.sold_cum > 0 ? " · " + Math.round(100 * h.sold_cum) + "% realised" : "");
+  sub.appendChild(sl); sub.appendChild(sr); row.appendChild(sub);
+  hold.appendChild(row);
+});
+</script>
+</body>
+</html>
